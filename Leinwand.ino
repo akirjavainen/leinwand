@@ -55,7 +55,7 @@
 
 // Capture your remote with the rc-switch library and paste commands as binary here:
 #define LEINWAND_DOWN   "000000000000000000000100"
-#define LEINWAND STOP   "000000000000000000000010"
+#define LEINWAND_STOP   "000000000000000000000010"
 #define LEINWAND_UP     "000000000000000000000001"
 
 
