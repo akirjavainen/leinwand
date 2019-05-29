@@ -78,7 +78,7 @@ def doLeinwandTribitSend(command):
             print "Invalid character", i, "in command! Exiting..."
             exitProgram()
 
-    # rc-switch doesn't record the trailing "0",,
+    # rc-switch doesn't record the trailing "0",
     # so we add it here:
     transmitHigh(LEINWAND_SHORT)
     transmitLow(LEINWAND_LONG)
