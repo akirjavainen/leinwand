@@ -12,14 +12,14 @@
 * 
 * HOW TO USE
 * 
-* Capture the binary commands from your remote with rc-switch and copy paste the 25 bit commands to the #defines below. Then you
+* Capture the binary commands from your remote with rc-switch and copy paste the 24 bit commands to the #defines below. Then you
 * can control your projection screen with sendLeinwandCommand(LEINWAND_DOWN), sendLeinwandCommand(LEINWAND_UP) etc.
 * 
 * 
 * PROTOCOL DESCRIPTION
 * 
 * Tri-state bits are used.
-* A single command is: (no AGC/preamble) 25 command bits + radio silence
+* A single command is: (no AGC/preamble) 24 command bits + radio silence
 *
 * All sample counts below listed with a sample rate of 44100 Hz (sample count / 44100 = microseconds).
 * 
@@ -45,9 +45,9 @@
 
 
 // Example commands (capture your own remotes with the rc-switch library):
-#define LEINWAND_DOWN     "0000010101011100111101000"
-#define LEINWAND_STOP     "0000010101011100111100100"
-#define LEINWAND_UP       "0000010101011100111100010"
+#define LEINWAND_DOWN     "000001010101110011110100"
+#define LEINWAND_STOP     "000001010101110011110010"
+#define LEINWAND_UP       "000001010101110011110001"
 
 
 
@@ -57,7 +57,7 @@
 #define LEINWAND_RADIO_SILENCE            9920   // 438 samples
 #define LEINWAND_PULSE_SHORT              390    // 17 samples
 #define LEINWAND_PULSE_LONG               1030   // 45 samples (approx. PULSE_SHORT * 3)
-#define LEINWAND_COMMAND_BIT_ARRAY_SIZE   25     // Command bit count + ending zero (implemented like this for rcswitch compatibility)
+#define LEINWAND_COMMAND_BIT_ARRAY_SIZE   24     // Command bit count
 
 
 #define TRANSMIT_PIN                      13     // We'll use digital 13 for transmitting
@@ -132,6 +132,11 @@ void doLeinwandSend(char* command) {
       transmitLow(LEINWAND_PULSE_SHORT);
     }
    }
+
+  // For command compatibility with rc-switch,
+  // we send an extra "0" at the end:
+  transmitHigh(LEINWAND_PULSE_SHORT);
+  transmitLow(LEINWAND_PULSE_LONG);
 
   // Radio silence at the end.
   // It's better to rather go a bit over than under required length.
