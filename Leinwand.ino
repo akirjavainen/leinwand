@@ -134,8 +134,8 @@ void doLeinwandSend(char* command) {
     }
    }
 
-  // For command compatibility with rc-switch,
-  // we send an extra "0" at the end:
+  // rc-switch doesn't record the trailing "0",
+  // so we add it here:
   transmitHigh(LEINWAND_PULSE_SHORT);
   transmitLow(LEINWAND_PULSE_LONG);
 
