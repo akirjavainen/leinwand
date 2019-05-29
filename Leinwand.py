@@ -78,8 +78,8 @@ def doLeinwandTribitSend(command):
             print "Invalid character", i, "in command! Exiting..."
             exitProgram()
 
-    # For command compatibility with rc-switch,
-    # we send an extra "0" at the end of each command:
+    # rc-switch doesn't record the trailing "0",,
+    # so we add it here:
     transmitHigh(LEINWAND_SHORT)
     transmitLow(LEINWAND_LONG)
 
