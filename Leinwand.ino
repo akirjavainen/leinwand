@@ -5,21 +5,21 @@
 * 
 * Code by Antti Kirjavainen (antti.kirjavainen [_at_] gmail.com)
 * 
-* Since I only have one of these products, I've been unable to verify if the remotes have unique IDs or if they all send identical
+* Since I only have one of these products, I'm not able to tell if the remotes have unique IDs or if they all send identical
 * commands. This code is command-compatible with the rc-switch library, so you can capture your remote either with that or use an
-* oscillator. You can download rc-switch here: https://github.com/sui77/rc-switch
+* oscilloscope. You can download rc-switch here: https://github.com/sui77/rc-switch
 * 
 * 
 * HOW TO USE
 * 
-* Capture the binary commands from your remote with rc-switch and copy paste the 24 bit commands to the #defines below. Then you
+* Capture the binary commands from your remote with rc-switch and copy paste the 25 bit commands to the #defines below. Then you
 * can control your projection screen with sendLeinwandCommand(LEINWAND_DOWN), sendLeinwandCommand(LEINWAND_UP) etc.
 * 
 * 
 * PROTOCOL DESCRIPTION
 * 
 * Tri-state bits are used.
-* A single command is: 25 command bits + radio silence (no AGC)
+* A single command is: (no AGC/preamble) 25 command bits + radio silence
 *
 * All sample counts below listed with a sample rate of 44100 Hz (sample count / 44100 = microseconds).
 * 
@@ -34,29 +34,21 @@
 * Command is as follows:
 * 21 bits for (possibly unique) remote control ID (hard coded in remotes?)
 * 3 bits for command: DOWN = 100, UP = 001, STOP = 010
-* 1 trailing bit (0, LOW) automatically added for rc-switch command compatibility
+* 1 trailing bit (0, LOW), add to the end of commands if necessary
 * = 25 bits in total
 * 
 * End with LOW radio silence of (minimum) 438 samples = 9932 us
-* 
-* 
-* HOW THIS WAS STARTED
-* 
-* Commands were captured by a "poor man's oscillator": 433.92MHz receiver unit (data pin) -> 10K Ohm resistor -> USB sound card line-in.
-* Try that at your own risk. Power to the 433.92MHz receiver unit was provided by Arduino (connected to 5V and GND).
-*
-* To view the waveform Arduino is transmitting (and debugging timings etc.), I found it easiest to directly connect the digital pin (13)
-* from Arduino -> 10K Ohm resistor -> USB sound card line-in. This way the waveform was very clear.
 * 
 ******************************************************************************************************************************************************************
 */
 
 
 
-// Capture your remote with the rc-switch library and paste commands as binary here:
-#define LEINWAND_DOWN   "000000000000000000000100"
-#define LEINWAND_STOP   "000000000000000000000010"
-#define LEINWAND_UP     "000000000000000000000001"
+// Example commands (capture your own remotes with the rc-switch library):
+#define LEINWAND_DOWN     "0000010101011100111101000"
+#define LEINWAND_STOP     "0000010101011100111100100"
+#define LEINWAND_UP       "0000010101011100111100010"
+
 
 
 // Timings in microseconds (us). Get sample count by zooming all the way in to the waveform with Audacity.
@@ -76,6 +68,7 @@
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 void setup() {
   Serial.begin(9600); // Used for error messages even with DEBUG set to false
+  
   if (DEBUG) Serial.println("Starting up...");
 }
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -83,38 +76,35 @@ void setup() {
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 void loop() {
   sendLeinwandCommand(LEINWAND_DOWN);
-  delay(3000);
+  delay(10000);
+  sendLeinwandCommand(LEINWAND_UP);
+  delay(10000);
 }
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-void sendLeinwandCommand(String command) {
+void sendLeinwandCommand(char* command) {
+
+  if (command == NULL) {
+    errorLog("sendLeinwandCommand(): Command array pointer was NULL, cannot continue.");
+    return;
+  }
+
   // Prepare for transmitting and check for validity
   pinMode(TRANSMIT_PIN, OUTPUT); // Prepare the digital pin for output
   
-  // rc-switch adds an ending zero, so we retain command
-  // compatibility with the library by adding it here:
-  command = command + "0";
-
-  if (command.length() < LEINWAND_COMMAND_BIT_ARRAY_SIZE) {
+  if (strlen(command) < LEINWAND_COMMAND_BIT_ARRAY_SIZE) {
     errorLog("sendLeinwandCommand(): Invalid command (too short), cannot continue.");
     return;
   }
-  if (command.length() > LEINWAND_COMMAND_BIT_ARRAY_SIZE) {
+  if (strlen(command) > LEINWAND_COMMAND_BIT_ARRAY_SIZE) {
     errorLog("sendLeinwandCommand(): Invalid command (too long), cannot continue.");
     return;
   }
-
-  // Declare the array (int) of command bits
-  int command_array[LEINWAND_COMMAND_BIT_ARRAY_SIZE];
-
-  // Processing a string during transmit is just too slow,
-  // let's convert it to an array of int first:
-  convertStringToArrayOfInt(command, command_array, LEINWAND_COMMAND_BIT_ARRAY_SIZE);
   
   // Repeat the command:
   for (int i = 0; i < REPEAT_COMMAND; i++) {
-    doLeinwandSend(command_array);
+    doLeinwandSend(command);
   }
 
   // Disable output to transmitter to prevent interference with
@@ -125,23 +115,19 @@ void sendLeinwandCommand(String command) {
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-void doLeinwandSend(int *command_array) {
-  if (command_array == NULL) {
-    errorLog("doLeinwandSend(): Array pointer was NULL, cannot continue.");
-    return;
-  }
+void doLeinwandSend(char* command) {
 
   // Transmit command:
   for (int i = 0; i < LEINWAND_COMMAND_BIT_ARRAY_SIZE; i++) {
 
-    // If current command bit is 0, transmit SHORT HIGH and LONG LOW (wire 100):
-    if (command_array[i] == 0) {
+    // If current command bit is 0, transmit HIGH-LOW-LOW (wire 100):
+    if (command[i] == '0') {
       transmitHigh(LEINWAND_PULSE_SHORT);
       transmitLow(LEINWAND_PULSE_LONG);
     }
 
-    // If current command bit is 1, transmit LONG HIGH and SHORT LOW (wire 110):
-    if (command_array[i] == 1) {
+    // If current command bit is 1, transmit HIGH-HIGH-LOW (wire 110):
+    if (command[i] == '1') {
       transmitHigh(LEINWAND_PULSE_LONG);
       transmitLow(LEINWAND_PULSE_SHORT);
     }
@@ -164,6 +150,7 @@ void doLeinwandSend(int *command_array) {
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 void transmitHigh(int delay_microseconds) {
   digitalWrite(TRANSMIT_PIN, HIGH);
+  //PORTB = PORTB D13high; // If you wish to use faster PORTB calls instead
   delayMicroseconds(delay_microseconds);
 }
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -171,41 +158,8 @@ void transmitHigh(int delay_microseconds) {
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 void transmitLow(int delay_microseconds) {
   digitalWrite(TRANSMIT_PIN, LOW);
+  //PORTB = PORTB D13low; // If you wish to use faster PORTB calls instead
   delayMicroseconds(delay_microseconds);
-}
-// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-int convertStringToInt(String s) {
-  char carray[2];
-  int i = 0;
-  
-  s.toCharArray(carray, sizeof(carray));
-  i = atoi(carray);
-
-  return i;
-}
-// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-void convertStringToArrayOfInt(String command, int *int_array, int command_array_size) {
-  String c = "";
-
-  if (int_array == NULL) {
-    errorLog("convertStringToArrayOfInt(): Array pointer was NULL, cannot continue.");
-    return;
-  }
- 
-  for (int i = 0; i < command_array_size; i++) {
-      c = command.substring(i, i + 1);
-
-      if (c == "0" || c == "1") {
-        int_array[i] = convertStringToInt(c);
-      } else {
-        errorLog("convertStringToArrayOfInt(): Invalid character " + c + " in command.");
-        return;
-      }
-  }
 }
 // ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
