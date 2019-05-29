@@ -9,7 +9,7 @@
 * the Raspberry Pi. Plug your transmitter to BOARD PIN 16 (BCM/GPIO23).
 *
 * HOW TO USE
-* ./Leinwand.py [41-bit_binary_string]
+* ./Leinwand.py [24-bit_binary_string]
 *
 * More info on the protocol in Leinwand.ino and RemoteCapture.ino here:
 * https://github.com/akirjavainen/axel
