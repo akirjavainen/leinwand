@@ -107,7 +107,7 @@ def printUsage():
     print "Usage:"
     print os.path.basename(sys.argv[0]), "[command_string]"
     print
-    print "Correct command length is", LEINWAND_RADIO_SILENCE, "bits."
+    print "Correct command length is", LEINWAND_COMMAND_BIT_ARRAY_SIZE, "bits."
     print
     exit()
 # ------------------------------------------------------------------
