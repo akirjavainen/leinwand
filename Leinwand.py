@@ -23,7 +23,7 @@ import RPi.GPIO as GPIO
 
 
 TRANSMIT_PIN = 16  # BCM PIN 23 (GPIO23, BOARD PIN 16)
-REPEAT_COMMAND = 8
+REPEAT_COMMAND = 10
 
 
 # Microseconds (us) converted to seconds for time.sleep() function:
