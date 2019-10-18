@@ -39,8 +39,8 @@ LEINWAND_COMMAND_BIT_ARRAY_SIZE = 24
 def sendLeinwandCommand(command):
 
     if len(str(command)) is not LEINWAND_COMMAND_BIT_ARRAY_SIZE:
-        print "Your (invalid) command was", len(str(command)), "bits long."
-        print ""
+        print("Your (invalid) command was", len(str(command)), "bits long.")
+        print
         printUsage()
 
     # Prepare:
@@ -75,7 +75,7 @@ def doLeinwandTribitSend(command):
             transmitLow(LEINWAND_SHORT)
 
         else:
-            print "Invalid character", i, "in command! Exiting..."
+            print("Invalid character", i, "in command! Exiting...")
             exitProgram()
 
     # rc-switch doesn't record the trailing "0",
@@ -104,10 +104,10 @@ def transmitLow(delay):
 
 # ------------------------------------------------------------------
 def printUsage():
-    print "Usage:"
-    print os.path.basename(sys.argv[0]), "[command_string]"
+    print("Usage:")
+    print(os.path.basename(sys.argv[0]), "[command_string]")
     print
-    print "Correct command length is", LEINWAND_COMMAND_BIT_ARRAY_SIZE, "bits."
+    print("Correct command length is", LEINWAND_COMMAND_BIT_ARRAY_SIZE, "bits.")
     print
     exit()
 # ------------------------------------------------------------------
