@@ -12,7 +12,7 @@
 * ./Leinwand.py [24-bit_binary_string]
 *
 * More info on the protocol in Leinwand.ino and RemoteCapture.ino here:
-* https://github.com/akirjavainen/axel
+* https://github.com/akirjavainen/leinwand
 *
 """
 
